@@ -1,0 +1,25 @@
+# Simulation / build artifacts
+sim/
+**/sim_build/
+**/obj_dir/
+*.vcd
+*.fst
+*.log
+
+# Formal run dirs (sby output)
+formal/out/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+
+# Local-only working files (kept on disk, not part of the public tree)
+LEARNING.md
+ROADMAP.md
