@@ -55,7 +55,8 @@ docs/     spec + diagrams
 The exact same `./run.sh` commands work on **macOS**, **Linux**, and **Windows**
 (WSL or Git Bash). Tool names and Python/cocotb versions are pinned identically
 across platforms — `requirements.txt` is the single source of truth for the
-Python side.
+Python side. For the day-to-day push/pull routine when moving between machines,
+see [`docs/SYNC.md`](docs/SYNC.md).
 
 ### macOS — clone, one-time setup, run
 
