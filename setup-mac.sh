@@ -99,6 +99,31 @@ log "installing pinned cocotb + numpy into the venv"
 "$VENV/bin/python" -m pip install -r "$REQS" || die "pip install -r requirements.txt failed"
 ok "python deps: $("$VENV/bin/python" -m pip show cocotb numpy 2>/dev/null | awk '/^Name|^Version/{printf "%s ", $2} END{print ""}')"
 
+# ---- 4b. point sby at the venv interpreter ---------------------------------
+# sby ships a `#!/usr/bin/env python3` launcher, so it runs under whatever python3
+# is first on PATH — which may be a bare system or conda python lacking sby's
+# `click` dependency (the failure looks like: ModuleNotFoundError: No module named
+# 'click'). Repoint the shebang at the venv, which has click (pinned in
+# requirements.txt), so `run.sh formal` works no matter what python3 is on PATH.
+# Idempotent: only rewrites the first line, and only if it isn't already the venv.
+SBY_BIN="$(command -v sby || true)"
+if [ -n "$SBY_BIN" ] && [ -x "$VENV/bin/python" ] && head -1 "$SBY_BIN" | grep -q '^#!'; then
+    want="#!$VENV/bin/python"
+    if [ "$(head -1 "$SBY_BIN")" = "$want" ]; then
+        ok "sby already uses the venv python"
+    else
+        tmp="$(mktemp)"
+        { printf '%s\n' "$want"; tail -n +2 "$SBY_BIN"; } > "$tmp" && chmod +x "$tmp"
+        if mv "$tmp" "$SBY_BIN" 2>/dev/null; then
+            ok "sby now runs under $VENV/bin/python (has click)"
+        else
+            rm -f "$tmp"
+            warn "couldn't rewrite sby shebang at $SBY_BIN — if 'run.sh formal' reports"
+            warn "  \"No module named 'click'\", run: $VENV/bin/pip install click"
+        fi
+    fi
+fi
+
 # ---- 5. report -------------------------------------------------------------
 echo
 log "toolchain summary"

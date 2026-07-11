@@ -23,4 +23,44 @@ module mac #(
             acc_o <= acc_o + ACC_W'(a_i*b_i);
         end
     end
+
+`ifdef FORMAL
+    // Formal properties (SymbiYosys + z3). Compiled only under -DFORMAL, so this
+    // block is invisible to `run.sh sim`/`lint`. Proven by ./run.sh formal mac.
+    logic f_past_valid;
+    initial f_past_valid = 1'b0;
+    always_ff @(posedge clk_i) f_past_valid <= 1'b1;
+
+    always_ff @(posedge clk_i) begin
+        if (f_past_valid) begin
+            // 1. Reset dominates everything: acc is exactly zero after rst.
+            if ($past(rst_i)) begin
+                a_reset_zeroes: assert (acc_o == '0);
+            end
+            // 2. Clear (when not reset) zeroes the accumulator, even if en was set:
+            //    proves clear has priority over enable.
+            else if ($past(clear_i)) begin
+                a_clear_beats_enable: assert (acc_o == '0);
+            end
+            // 3. Enabled (not reset/cleared): acc advances by exactly the signed
+            //    product — the accumulate contract, with no width truncation.
+            else if ($past(en_i)) begin
+                a_accumulate: assert (acc_o ==
+                    $past(acc_o) + ACC_W'(signed'($past(a_i)) * signed'($past(b_i))));
+            end
+            // 4. Idle (not reset/cleared/enabled): the accumulator holds its value.
+            else begin
+                a_hold: assert (acc_o == $past(acc_o));
+            end
+        end
+    end
+
+    // Liveness sanity: the accumulator can actually reach a nonzero value, so the
+    // proofs above aren't vacuously true on a stuck-at-zero design.
+    always_ff @(posedge clk_i) begin
+        if (f_past_valid) begin
+            c_nonzero_acc: cover (acc_o != '0);
+        end
+    end
+`endif
 endmodule

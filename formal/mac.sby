@@ -1,0 +1,19 @@
+# SymbiYosys job for the mac unit. Proves the accumulate contract from rtl/mac.sv:
+#   reset -> 0, clear -> 0 (beats enable), enabled -> += signed product, else hold.
+# Single-task prove job so `./run.sh formal mac` (which runs one workdir) drives it
+# directly. depth 6 is ample: every property is a one-cycle relation over $past.
+[options]
+mode prove
+depth 6
+
+[engines]
+smtbmc z3
+
+[script]
+# -DFORMAL exposes the `ifdef FORMAL assertions in rtl/mac.sv.
+read -define FORMAL=1
+read -sv mac.sv
+prep -top mac
+
+[files]
+../rtl/mac.sv

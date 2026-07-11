@@ -13,3 +13,9 @@
 # pins stay identical across Windows and macOS.
 cocotb==2.0.1
 numpy==2.5.1
+
+# SymbiYosys (sby) runtime dependency. sby is not a Python package we import, but
+# its launcher needs `click`; setup-mac.sh points sby at this venv so the formal
+# flow works regardless of which python3 is first on PATH. Harmless on WSL/Linux,
+# where a system sby already finds its own click.
+click==8.4.2
