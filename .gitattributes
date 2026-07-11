@@ -1,5 +1,22 @@
+# Normalize line endings so the repo behaves identically on Windows and macOS.
+# Default: let Git detect text and normalize to LF in the repository.
 * text=auto
-*.sh text eol=lf
-*.py text eol=lf
-*.sv text eol=lf
-*.sby text eol=lf
+
+# Force LF on everything the toolchain executes or parses directly. Shell
+# scripts and .sby jobs MUST stay LF — CRLF makes bash and SymbiYosys choke,
+# and a CRLF setup-mac.sh will not run on macOS at all.
+*.sh   text eol=lf
+*.py   text eol=lf
+*.sv   text eol=lf
+*.svh  text eol=lf
+*.v    text eol=lf
+*.vh   text eol=lf
+*.sby  text eol=lf
+*.f    text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+Makefile text eol=lf
+
+# Waveform / build outputs are binary (also gitignored, listed for safety).
+*.vcd  binary
+*.fst  binary
