@@ -13,7 +13,7 @@ Built with **open-source tools only** — everything is reproducible from a clon
 | Block | Status |
 |---|---|
 | Architecture spec (`docs/SPEC.md`) | in progress |
-| MAC unit | done — lint-clean, self-checking TB, cocotb regression vs NumPy, formal proof |
+| MAC unit | done — lint-clean, self-checking TB (17 checks) |
 | Processing element | planned |
 | Systolic array | planned |
 | Control + operand feeders | planned |
