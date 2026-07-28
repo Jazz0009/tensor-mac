@@ -1,0 +1,26 @@
+# SymbiYosys job for the mac unit.
+#
+# Bounded model check to start: explores every input sequence out to `depth`
+# cycles from reset and reports the first one that violates an assertion.
+# Passing here means "no counterexample within 20 cycles" — not "holds forever".
+# Switch to `mode prove` for the unbounded (k-induction) result.
+#
+# z3 is the only SMT solver installed on this machine; yices/boolector are not,
+# so the engine line must name z3 explicitly.
+
+[options]
+mode prove
+depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+# -DFORMAL exposes the `ifdef FORMAL properties in rtl/mac.sv, which stay
+# invisible to iverilog and verilator lint.
+read -define FORMAL=1
+read -sv mac.sv
+prep -top mac
+
+[files]
+../rtl/mac.sv
