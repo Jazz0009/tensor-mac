@@ -19,9 +19,21 @@ interviewer can walk through cold in ~2 minutes.
 
 ## 2. Number formats
 
-     Inputs are signed INT8 with range of -2^(w-1):2^(w-1) - 1, for signed w bit number
-     Worst case of product is -128x-128 = 16384 which needs 16 bits of storage for multiplication
-     then we have K-depth on each so the width required is ACC_W = 16 + [log(base 2)k].
+     Inputs are signed DW-bit, range -2^(DW-1) : 2^(DW-1) - 1.
+     Worst case product is (-2^(DW-1)) x (-2^(DW-1)) = 2^(2·DW-2) — both operands at their most
+     negative. That is the largest magnitude a signed multiply can produce, and it needs 2·DW
+     bits, because one bit of each operand is spent on sign.
+     Accumulating K of them, the running total is bounded by
+
+         |acc| <= K · 2^(2·DW-2)
+
+     and a signed register of width W holds up to 2^(W-1), so it is enough that
+
+         2^(ACC_W-1) >= K · 2^(2·DW-2)   =>   ACC_W >= 2·DW + log2(K)
+
+     giving the locked width  ACC_W = 2·DW + ⌈log₂K⌉.
+     At DW=8, K=8: the worst product is 16384, the worst sum is 8 × 16384 = 131072, and
+     ACC_W = 16 + 3 = 19 bits (signed range -262144 : 262143). It fits, with margin.
      So now we have designed it robust enough to handle even the worst case and not fail.
 
 ## 3. Dataflow
@@ -38,13 +50,14 @@ interviewer can walk through cold in ~2 minutes.
                    cycle. A crosses left->right, B falls top->bottom. PE(i,j) sees A[i][k] and
                    B[k][j] on the same cycle and does acc <= acc + A[i][k]*B[k][j]. After K
                    steps every PE holds its finished C[i][j], and the tile is drained out.
-     Only 8-bit numbers ever move between PEs. The 24-bit accumulator stays inside its own cell.
+     Only 8-bit numbers ever move between PEs. The ACC_W-bit accumulator (19 bits at DW=8,
+     K=8) stays inside its own cell.
      Vs. WS      : weight-stationary instead pins one element of B per PE, loaded once and
                    reused across the whole activation stream, with partial sums flowing down and
                    accumulating as they descend. WS wins when the same weights serve a large
                    batch, because it stops re-fetching B from memory and memory fetches cost far
                    more energy than a neighbour hop. The price is that the thing in motion is the
-                   wide (~24-bit) partial sum instead of an 8-bit operand, plus a separate
+                   wide (ACC_W-bit) partial sum instead of an 8-bit operand, plus a separate
                    weight-load phase and a PE with no long-lived accumulator (so it cannot reuse
                    `mac.sv`). I am building OS first to get a correct array on a verified cell,
                    and WS second so I can measure the trade instead of just arguing it. See §7.
@@ -81,7 +94,8 @@ for the whole pass; there is no separate load phase, because nothing is pinned.
 | `out_ready_i` | in  | 1          | receiver asserts when it can accept a result column |
 
 Widths: operands are DW=8 bits, so an operand bus is `N*DW`. Results are the wide accumulator,
-so the result bus is `N*ACC_W` (≈ N*24) — the output stream is the widest port on the block.
+so the result bus is `N*ACC_W` (N*19 at DW=8, K=8) — the output stream is the widest port on
+the block, and it grows with K while the operand buses do not.
 Transfer on any stream fires only when its `valid` and `ready` are both high on a clock edge.
 
 Naming note: two symmetric input streams means the house `in_valid_i`/`in_ready_o` pair would be
