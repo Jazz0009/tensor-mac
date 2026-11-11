@@ -1,21 +1,2 @@
-# cocotb regression environment — shared pin for Windows and macOS.
-# Both platforms install these into the same venv (~/.venvs/cocotb) so a
-# passing run on one machine reproduces bit-for-bit on the other.
-#
-#   macOS  : ./setup-mac.sh          (creates the venv and installs this)
-#   Windows: python -m venv ~/.venvs/cocotb && pip install -r requirements.txt
-#
-# Pinned to the latest stable releases. Internal requirements:
-#   - cocotb 2.x is mandatory: dv/sim.py imports cocotb_tools.runner, which
-#     does not exist in cocotb 1.x.
-#   - numpy 2.5.x needs Python >= 3.12 (setup-mac.sh installs python@3.13).
-# If you bump a version, do it here and re-run setup on every machine so the
-# pins stay identical across Windows and macOS.
 cocotb==2.0.1
 numpy==2.5.1
-
-# SymbiYosys (sby) runtime dependency. sby is not a Python package we import, but
-# its launcher needs `click`; setup-mac.sh points sby at this venv so the formal
-# flow works regardless of which python3 is first on PATH. Harmless on WSL/Linux,
-# where a system sby already finds its own click.
-click==8.4.2
