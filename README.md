@@ -1,5 +1,7 @@
 # tensor-mac
 
+[![CI](https://github.com/Jazz0009/tensor-mac/actions/workflows/ci.yml/badge.svg)](https://github.com/Jazz0009/tensor-mac/actions/workflows/ci.yml)
+
 A parameterized **INT8 systolic-array matrix-multiply accelerator** in SystemVerilog, verified three ways:
 constrained-random cocotb regression against NumPy, an unbounded formal proof with SymbiYosys, and mutation
 testing to show the tests catch real bugs. Open-source tools only; one `make` reproduces every result below.
