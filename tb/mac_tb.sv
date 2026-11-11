@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-// mac_tb.sv — self-checking TB for mac: signed corners, accumulate-over-K, clear-while-enabled. M11.
+// mac_tb.sv — self-checking TB for mac: signed corners, accumulate-over-K, clear-while-enabled.
 module mac_tb;
     localparam int DW = 8;
     localparam int K  = 8;

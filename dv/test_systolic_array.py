@@ -68,22 +68,3 @@ async def array_matmul(dut):
 
     assert check != 0, "vacuous pass: no checks performed"
     dut._log.info(f"scoreboard OK: {check} Accumulators checked")
-
-                    
-
-
-        
-
-
-
-            
-
-
-        
-    # --- feeding schedule: what goes on a_i[row] / b_i[col] each cycle? ---
-    # this is the whole problem — work it out before filling it in
-
-    # --- drain, then sample c_o and check vs golden ---
-
-    # assert check_count > 0
-    # dut._log.info(f"...: {check_count} matmuls checked")

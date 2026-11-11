@@ -1,4 +1,4 @@
-// pe.sv — output-stationary processing element: one mac.sv + registered operand pass-through. M12.
+// pe.sv — output-stationary processing element: one mac.sv + registered operand pass-through.
 module pe #(
     parameter int DW = 8,
     parameter int K = 8,

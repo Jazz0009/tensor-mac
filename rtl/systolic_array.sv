@@ -1,4 +1,4 @@
-// systolic_array.sv — N×N grid of output-stationary PEs (A flows east, B flows south). M13.
+// systolic_array.sv — N×N grid of output-stationary PEs (A flows east, B flows south).
 module systolic_array #(
     parameter  int N  = 2,
     parameter  int DW = 8,
@@ -16,13 +16,8 @@ module systolic_array #(
 
     logic signed [DW-1:0] a_h [0:N-1][0:N];
     logic signed [DW-1:0] b_v [0:N][0:N-1];
-    // --- internal interconnect — YOU size and wire these ---
-    // a_h : A operands flowing EAST across each row   (fencepost on the column index)
-    // b_v : B operands flowing SOUTH down each column (fencepost on the row index)
-    //
-    // then a nested genvar loop (row r, col c) instantiates the N*N pe's:
-    //   each pe reads A from the west link, B from the north link,
-    //   drives A onto its east link, B onto its south link, and exposes acc_o -> c_o[r][c]
+    // a_h carries A east across each row, b_v carries B south down each column.
+    // N cells need N+1 links along the flow direction: index 0 is the injected edge, N is the drain.
     genvar r, c;
     generate
     for (r = 0; r < N; r++) begin : gen_row

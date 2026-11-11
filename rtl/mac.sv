@@ -1,4 +1,4 @@
-// mac.sv — signed DW×DW multiply + wide accumulate register (synchronous clear + enable). M11.
+// mac.sv — signed DW×DW multiply + wide accumulate register (synchronous clear + enable).
 module mac #(
     parameter int DW = 8,
     parameter int K = 8,
