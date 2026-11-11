@@ -153,3 +153,80 @@ WS variant on the same top level and the same golden-model regression:
 The point is to report both against the same benchmark — cycles per matmul, utilization, and
 gate count from `yosys` — so the OS-vs-WS trade is something this repo measures rather than
 something it asserts.
+
+## 8. Control FSM (M14)
+
+The array free-runs in lockstep on a global enable — there is no ready/valid *inside* it,
+because the skew makes every operand's arrival time known at design time. The controller's job
+is to sequence one tile through its phases and hold the enable for exactly the right span; the
+handshakes it drives live only at the edge, where the outside world's timing is still unknown.
+
+### 8.1 Interface
+
+| Port        | Dir | Width | Role |
+|-------------|-----|-------|------|
+| `clk_i`     | in  | 1     | clock |
+| `rst_i`     | in  | 1     | synchronous, active-high reset |
+| `start_i`   | in  | 1     | pulse: begin one NxN tile |
+| `clear_o`   | out | 1     | zero the PE accumulators before a fresh tile (drives `clear_i` on the PE) |
+| `en_o`      | out | 1     | global PE enable — the array's lockstep clock-gate |
+| `feed_en_o` | out | 1     | feeders may source operands this cycle (high in FEED, low in DRAIN) |
+| `done_o`    | out | 1     | tile complete, C is settled and readable |
+
+### 8.2 State diagram
+
+```
+        start_i                cnt = N+K-1            cnt = 2(N-1)+K
+  IDLE ─────────► FEED ──────────────────► DRAIN ──────────────────► DONE
+   ▲   (clear)   en=1                       en=1                      en=0
+   │             feed_en=1                  feed_en=0                 done=1
+   │                                                                   │
+   └───────────────────────────────────────────────────────────────┘
+                         (consumer takes result / next start)
+```
+
+### 8.3 Cycle contract
+
+`cnt` counts cycles since leaving IDLE; the first FEED cycle is `cnt = 0`.
+
+     Fill/wavefront : PE(i,j) begins accumulating at cnt = i+j (when its skewed operands arrive)
+                      and needs K accumulate edges, finishing after cnt = i+j+K.
+     Last operand   : row N-1 starts feeding at cnt = N-1 and pushes K values on consecutive
+                      cycles, so the last real operand enters at
+                          (N-1) + (K-1) = N + K - 2.
+     Last accumulate: the corner PE(N-1,N-1) commits its K-th MAC on the edge entering
+                          cnt = 2(N-1) + K,
+                      i.e. its last accumulate cycle is cnt = 2(N-1)+K - 1.
+     Done           : the corner result is settled at cnt = 2(N-1)+K — the exact cycle M13's
+                      test sampled at (LATENCY = 2(N-1)+K).
+
+Phase boundaries that follow:
+
+| Phase | cnt range              | `en_o` | `feed_en_o` | `done_o` |
+|-------|------------------------|--------|-------------|----------|
+| FEED  | `0 … N+K-2`            | 1      | 1           | 0        |
+| DRAIN | `N+K-1 … 2(N-1)+K - 1` | 1      | 0           | 0        |
+| DONE  | `2(N-1)+K`             | 0      | 0           | 1        |
+
+DRAIN is exactly `N-1` cycles — the time for the last operand to travel from the edge to the
+far corner: `(2(N-1)+K - 1) - (N+K-1) + 1 = N-1`. A clean consistency check.
+
+Worked timeline, N=2, K=2 (so N+K-2 = 2, 2(N-1)+K = 4):
+
+| cnt | phase | `en_o` | `feed_en_o` | `done_o` | note |
+|-----|-------|--------|-------------|----------|------|
+| 0   | FEED  | 1 | 1 | 0 | A[0][0], B[0][0] enter; PE(0,0) starts |
+| 1   | FEED  | 1 | 1 | 0 | A[0][1], A[1][0], … enter |
+| 2   | FEED  | 1 | 1 | 0 | last operands A[1][1], B[1][1] enter |
+| 3   | DRAIN | 1 | 0 | 0 | feeders idle; corner PE finishing |
+| 4   | DONE  | 0 | 0 | 1 | C settled, readable |
+
+`cnt` width: `$clog2(2(N-1)+K + 1)` — enough to hold the max count `2(N-1)+K`.
+
+### 8.4 Open design point — clear timing
+
+`clear_o` must zero the accumulators before the first accumulate, but M12's PE gives `clear_i`
+priority over accumulate (a `clear & en` cycle writes 0, not the product). So asserting `clear_o`
+*during* `cnt = 0` would discard PE(0,0)'s first product. The controller must therefore clear on
+a cycle before any real accumulate — e.g. held in IDLE, or one dedicated cycle on the
+IDLE→FEED transition. Settled in RTL against M12's clear-vs-accumulate priority.
