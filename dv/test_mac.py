@@ -71,5 +71,5 @@ async def mac_scoreboard(dut):
         
         
 
-    assert check != 0, "vacuous pass: no checks perfomed"
+    assert check != 0, "vacuous pass: no checks performed"
     dut._log.info(f"scoreboard OK: {check} Multiply and add checked")

@@ -66,7 +66,7 @@ async def array_matmul(dut):
                 assert got == exp, f"C[{r}][{c}] : got {got} : exp {exp}"
                 check += 1                                              
 
-    assert check != 0, "vacuous pass: no checks perfomed"
+    assert check != 0, "vacuous pass: no checks performed"
     dut._log.info(f"scoreboard OK: {check} Accumulators checked")
 
                     
