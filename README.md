@@ -1,6 +1,6 @@
 # tensor-mac
 
-[![CI](https://github.com/Jazz0009/tensor-mac/actions/workflows/ci.yml/badge.svg)](https://github.com/Jazz0009/tensor-mac/actions/workflows/ci.yml)
+[![CI](https://github.com/JaiminKadiwal/tensor-mac/actions/workflows/ci.yml/badge.svg)](https://github.com/JaiminKadiwal/tensor-mac/actions/workflows/ci.yml)
 
 A parameterized **INT8 systolic-array matrix-multiply accelerator** in SystemVerilog, verified three ways:
 constrained-random cocotb regression against NumPy, an unbounded formal proof with SymbiYosys, and mutation
@@ -68,7 +68,7 @@ Tools: Icarus Verilog, Verilator, Yosys, SymbiYosys, z3 (all in the [OSS CAD Sui
 plus Python 3 with the pinned packages.
 
 ```bash
-git clone https://github.com/Jazz0009/tensor-mac.git && cd tensor-mac
+git clone https://github.com/JaiminKadiwal/tensor-mac.git && cd tensor-mac
 pip install -r requirements.txt
 make            # lint + SV testbench + 3 cocotb regressions + formal proof
 ```
