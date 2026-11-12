@@ -1,2 +1,5 @@
 * text=auto eol=lf
 *.vcd binary
+
+# Language bar: count the RTL as the primary language; the cocotb tests stay in the repo
+dv/** linguist-detectable=false
